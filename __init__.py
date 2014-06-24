@@ -62,6 +62,7 @@ class MKA_UL_mkaddon(bpy.types.UIList):
         row.prop(item.sections.ui_panels,"useme",text="panel",toggle=True)
         row.prop(item.sections.registration,"useme",text="reg",toggle=True)
 
+
 class MKA_PT_mkaddon_panel(bpy.types.Panel):
     bl_label = "mkaddon"
     bl_space_type = "TEXT_EDITOR"
@@ -148,6 +149,7 @@ class MKA_PT_mkaddon_panel(bpy.types.Panel):
             if active.saving_to:
                 savbox.operator('mkaddon.save')
 
+
 class MKA_OT_mk_addon_add(bpy.types.Operator):
     bl_label = "mkaddon:add"
     bl_idname = "mkaddon.add"
@@ -158,6 +160,7 @@ class MKA_OT_mk_addon_add(bpy.types.Operator):
         addon.txtname = bpy.data.texts.new('mka_addon.py').name
         mka.i += 1
         return {"FINISHED"}
+
 
 class MKA_OT_mk_addon_save(bpy.types.Operator):
     bl_label = "mkaddon:save"
@@ -174,6 +177,7 @@ class MKA_OT_mk_addon_save(bpy.types.Operator):
         self.report({'INFO'},savto)
         return {"FINISHED"}
 
+
 def propupdate(self,context):
     context.window_manager.mka.i = context.window_manager.mka.i
 
@@ -185,11 +189,13 @@ def read_template(
 def EnumItems(*items):
     return [(e,e,e) for e in items]
 
+
 class AddonSection:
     @property
     def templated(self):
         return self.template(
                 {k:getattr(self,k) for k in self.myall}) if self.useme else ""
+
 
 class GPLSection(bpy.types.PropertyGroup,AddonSection):
     myall = []
@@ -239,6 +245,7 @@ class ImportsSection(bpy.types.PropertyGroup,AddonSection):
                     sorted(map("import %s".__mod__,self.commonpythonmodules)))
         return ""
 
+
 class ModNamed:
     @property
     def opclassname(self):
@@ -285,7 +292,7 @@ class InterfacePanelSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
             default="TOOLS",update=propupdate)
     bl_category = bpy.props.StringProperty(default="Quux",update=propupdate)
     paneloptions = bpy.props.EnumProperty(
-            items=EnumItems("INTERNAL","REGISTER","UNDO"),
+            items=EnumItems("HIDE_HEADER","DEFAULT_CLOSED"),
             options={"ENUM_FLAG"},update=propupdate)
     label = bpy.props.StringProperty(default="MyLabel",update=propupdate)
     @property
@@ -302,8 +309,6 @@ class InterfacePanelSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
             if len(self.bl_category):
                 return 'bl_category = "%s"' % self.bl_category
         return ""
-
-        
 
 
 class OperatorSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
