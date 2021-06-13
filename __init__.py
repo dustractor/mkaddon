@@ -18,10 +18,11 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-"name":"mkaddon",
-"author":"Shams Kitz",
-"description":"This may or may not have been a good idea.",
-"category":"Development"
+    "name":"mkaddon",
+    "author":"Shams Kitz",
+    "blender":(2,80,0),
+    "description":"This may or may not have been a good idea.",
+    "category":"Development"
 }
 
 import itertools
@@ -30,6 +31,14 @@ import bpy
 import re
 import os
 import string
+
+def _(f=None,c=[]):
+    if f:
+        c.append(f)
+        return f
+    else:
+        return c
+
 
 vis_icns = "RESTRICT_VIEW_ON","RESTRICT_VIEW_OFF"
 
@@ -51,9 +60,10 @@ def remove_extra_blank_lines(text):
     return "".join(itertools.compress(text,atmatch_locations))
 
 
+@_
 class MKA_UL_mkaddon(bpy.types.UIList):
     def draw_item(self,context,layout,data,item,icon,actvdata,actvprop):
-        layout.label(item.txtname)
+        layout.label(text=item.txtname)
         row = layout.row(align=True)
         row.prop(item.sections.gpl,"useme",text="gpl",toggle=True)
         row.prop(item.sections.bl_info,"useme",text="info",toggle=True)
@@ -63,6 +73,7 @@ class MKA_UL_mkaddon(bpy.types.UIList):
         row.prop(item.sections.registration,"useme",text="reg",toggle=True)
 
 
+@_
 class MKA_PT_mkaddon_panel(bpy.types.Panel):
     bl_label = "mkaddon"
     bl_space_type = "TEXT_EDITOR"
@@ -76,9 +87,9 @@ class MKA_PT_mkaddon_panel(bpy.types.Panel):
         if active:
             layout.prop(active,"modname")
             layout.separator()
-            layout.label(active.name)
+            layout.label(text=active.name)
             box = layout.box()
-            box.label("Sections:")
+            box.label(text="Sections:")
             if active.sections.bl_info.useme:
                 col = box.box()
                 row = col.row()
@@ -145,11 +156,12 @@ class MKA_PT_mkaddon_panel(bpy.types.Panel):
                 savbox.prop(active,"other_saveto")
             elif active.saveto == 'scripts':
                 savbox.prop(active,"scripts_saveto")
-            savbox.label(active.saving_to)
+            savbox.label(text=active.saving_to)
             if active.saving_to:
                 savbox.operator('mkaddon.save')
 
 
+@_
 class MKA_OT_mk_addon_add(bpy.types.Operator):
     bl_label = "mkaddon:add"
     bl_idname = "mkaddon.add"
@@ -162,6 +174,7 @@ class MKA_OT_mk_addon_add(bpy.types.Operator):
         return {"FINISHED"}
 
 
+@_
 class MKA_OT_mk_addon_save(bpy.types.Operator):
     bl_label = "mkaddon:save"
     bl_idname = "mkaddon.save"
@@ -197,26 +210,28 @@ class AddonSection:
                 {k:getattr(self,k) for k in self.myall}) if self.useme else ""
 
 
+@_
 class GPLSection(bpy.types.PropertyGroup,AddonSection):
     myall = []
     template = read_template("gpl_block.txt")
 
 
+@_
 class InfoSection(bpy.types.PropertyGroup,AddonSection):
     myall = ["name","description","author","version_str","blender_str",
             "location","warning","wiki_url","category"]
     template = read_template("bl_info_template.txt")
-    name = bpy.props.StringProperty(default="AddonName",update=propupdate)
-    description = bpy.props.StringProperty(default="",update=propupdate)
-    author = bpy.props.StringProperty(default="",update=propupdate)
-    version = bpy.props.IntVectorProperty(size=2,default=(0,1),
+    name: bpy.props.StringProperty(default="AddonName",update=propupdate)
+    description: bpy.props.StringProperty(default="",update=propupdate)
+    author: bpy.props.StringProperty(default="",update=propupdate)
+    version: bpy.props.IntVectorProperty(size=2,default=(0,1),
             update=propupdate)
-    blender = bpy.props.IntVectorProperty(size=3,default=(2,65,0),
+    blender: bpy.props.IntVectorProperty(size=3,default=(2,80,0),
             update=propupdate)
-    location = bpy.props.StringProperty(default="",update=propupdate)
-    warning = bpy.props.StringProperty(default="",update=propupdate)
-    wiki_url = bpy.props.StringProperty(default="",update=propupdate)
-    category = bpy.props.EnumProperty(default="Development",update=propupdate,
+    location: bpy.props.StringProperty(default="",update=propupdate)
+    warning: bpy.props.StringProperty(default="",update=propupdate)
+    wiki_url: bpy.props.StringProperty(default="",update=propupdate)
+    category: bpy.props.EnumProperty(default="Development",update=propupdate,
             items=EnumItems(
                 "3D View", "Add Mesh", "Add Curve", "Animation",
                 "Compositing", "Game Engine", "Import-Export", "Lighting",
@@ -230,10 +245,11 @@ class InfoSection(bpy.types.PropertyGroup,AddonSection):
         return ",".join(map(str,self.blender))
 
 
+@_
 class ImportsSection(bpy.types.PropertyGroup,AddonSection):
     myall = "imports",
     template = read_template("imports_template.txt")
-    commonpythonmodules = bpy.props.EnumProperty(
+    commonpythonmodules: bpy.props.EnumProperty(
             items=EnumItems(
                 #max 32 items (should be more than enough)
                 "bpy","os","sys","mathutils","bgl","blf","itertools"
@@ -270,13 +286,14 @@ class ModNamed:
         return ""
 
 
+@_
 class InterfacePanelSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
     myall = (
             "panelclassname","spacetype","regiontype","options","label","op",
             "toolcategory")
     template = read_template("interface_panel_template.txt")
-    myname = bpy.props.StringProperty(default="myname",update=propupdate)
-    spacetype = bpy.props.EnumProperty(
+    myname: bpy.props.StringProperty(default="myname",update=propupdate)
+    spacetype: bpy.props.EnumProperty(
             items=EnumItems(
                 "EMPTY", "VIEW_3D", "TIMELINE", "GRAPH_EDITOR",
                  "DOPESHEET_EDITOR", "NLA_EDITOR", "IMAGE_EDITOR",
@@ -286,15 +303,15 @@ class InterfacePanelSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
                  "FILE_BROWSER", "CONSOLE" ),
             default="VIEW_3D",
             update=propupdate)
-    regiontype = bpy.props.EnumProperty(
+    regiontype: bpy.props.EnumProperty(
             items=EnumItems( "WINDOW", "HEADER", "CHANNELS", "TEMPORARY",
             "UI", "TOOLS", "TOOL_PROPS", "PREVIEW"),
             default="TOOLS",update=propupdate)
-    bl_category = bpy.props.StringProperty(default="Quux",update=propupdate)
-    paneloptions = bpy.props.EnumProperty(
+    bl_category: bpy.props.StringProperty(default="Quux",update=propupdate)
+    paneloptions: bpy.props.EnumProperty(
             items=EnumItems("HIDE_HEADER","DEFAULT_CLOSED"),
             options={"ENUM_FLAG"},update=propupdate)
-    label = bpy.props.StringProperty(default="MyLabel",update=propupdate)
+    label: bpy.props.StringProperty(default="MyLabel",update=propupdate)
     @property
     def op(self):
         active = self.id_data.mka.active
@@ -311,39 +328,45 @@ class InterfacePanelSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
         return ""
 
 
+@_
 class OperatorSection(bpy.types.PropertyGroup,AddonSection,ModNamed):
     myall = "opclassname","myname","idname","label"
     template = read_template("operator_template.txt")
-    myname = bpy.props.StringProperty(default="myname",update=propupdate)
+    myname: bpy.props.StringProperty(default="myname",update=propupdate)
 
 
+@_
 class RegistrationSection(bpy.types.PropertyGroup,AddonSection):
     myall = "attachments","detachments"
     template = read_template("registration_template.txt")
-    attachments = bpy.props.StringProperty(default="",update=propupdate)
-    detachments = bpy.props.StringProperty(default="",update=propupdate)
+    attachments: bpy.props.StringProperty(default="",update=propupdate)
+    detachments: bpy.props.StringProperty(default="",update=propupdate)
 
 
 for cls in AddonSection.__subclasses__():
-    cls.useme = bpy.props.BoolProperty(update=propupdate)
-    cls.vis = bpy.props.BoolProperty(default=True,update=propupdate)
+    if "__annotations__" not in cls.__dict__:
+        setattr(cls,"__annotations__",dict())
+    cls.__annotations__["useme"] = bpy.props.BoolProperty(update=propupdate)
+    cls.__annotations__["vis"] = bpy.props.BoolProperty(default=True,update=propupdate)
 
 
+@_
 class AddonSections(bpy.types.PropertyGroup):
     myall = [
             "gpl","bl_info","imports",
             "operators","ui_panels","registration"]
-    gpl = bpy.props.PointerProperty(type=GPLSection)
-    bl_info = bpy.props.PointerProperty(type=InfoSection)
-    imports = bpy.props.PointerProperty(type=ImportsSection)
-    operators = bpy.props.PointerProperty(type=OperatorSection)
-    ui_panels = bpy.props.PointerProperty(type=InterfacePanelSection)
-    registration = bpy.props.PointerProperty(type=RegistrationSection)
+    gpl: bpy.props.PointerProperty(type=GPLSection)
+    bl_info: bpy.props.PointerProperty(type=InfoSection)
+    imports: bpy.props.PointerProperty(type=ImportsSection)
+    operators: bpy.props.PointerProperty(type=OperatorSection)
+    ui_panels: bpy.props.PointerProperty(type=InterfacePanelSection)
+    registration: bpy.props.PointerProperty(type=RegistrationSection)
     @property
     def data(self):
         return {k:getattr(self,k).templated for k in self.myall}
 
 
+@_
 class MKAddon(bpy.types.PropertyGroup):
     @property
     def saving_to(self):
@@ -358,14 +381,14 @@ class MKAddon(bpy.types.PropertyGroup):
             if self.scripts_saveto == 'user':
                 return os.path.join(bpy.utils.script_path_user(),'addons',name)
     template = read_template("addon_template.txt")
-    txtname = bpy.props.StringProperty()
-    modname = bpy.props.StringProperty(default='foo',update=propupdate)
-    saveto = bpy.props.EnumProperty(
+    txtname: bpy.props.StringProperty()
+    modname: bpy.props.StringProperty(default='foo',update=propupdate)
+    saveto: bpy.props.EnumProperty(
             items=EnumItems("desktop","scripts","other"),default="desktop")
-    scripts_saveto = bpy.props.EnumProperty(
+    scripts_saveto: bpy.props.EnumProperty(
             items=EnumItems("user","pref"),default="pref")
-    other_saveto = bpy.props.StringProperty(subtype='FILE_PATH')
-    sections = bpy.props.PointerProperty(type=AddonSections)
+    other_saveto: bpy.props.StringProperty(subtype='FILE_PATH')
+    sections: bpy.props.PointerProperty(type=AddonSections)
     def toString(self):
         return remove_extra_blank_lines(self.template(self.sections.data))
 
@@ -378,18 +401,19 @@ def update(self,context):
         bpy.ops.text.jump()
 
 
+@_
 class MKAProp(bpy.types.PropertyGroup):
-    addons = bpy.props.CollectionProperty(type=MKAddon)
-    i = bpy.props.IntProperty(min=-1,default=-1,update=update)
+    addons: bpy.props.CollectionProperty(type=MKAddon)
+    i: bpy.props.IntProperty(min=-1,default=-1,update=update)
     @property
     def active(self):
         return self.addons[self.i] if 0 <= self.i < len(self.addons) else None
 
 
 def register():
-    bpy.utils.register_module(__name__)
+    list(map(bpy.utils.register_class,_()))
     bpy.types.WindowManager.mka = bpy.props.PointerProperty(type=MKAProp)
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
     del bpy.types.WindowManager.mka
+    list(map(bpy.utils.unregister_class,_()))
